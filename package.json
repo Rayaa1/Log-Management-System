@@ -1,0 +1,10 @@
+
+{
+  "name": "log-management-system",
+  "version": "1.0.0",
+  "description": "Log Management System using Design Patterns",
+  "main": "index.js",
+  "scripts": {
+    "start": "node app.js"
+  }
+}
