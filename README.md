@@ -1,5 +1,5 @@
 # Log-Management-System
-# Log Management System
+
 
 A JavaScript (Node.js) application for managing log files, demonstrating the use of **Factory Pattern**, **Singleton Pattern**, and **Facade Pattern**.
 
