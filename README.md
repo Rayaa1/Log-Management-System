@@ -210,7 +210,7 @@ node -v
 ### Run the Application
 
 ```bash
-node app.js
+node start app.js
 ```
 
 ---
