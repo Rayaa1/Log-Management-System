@@ -1,2 +1,6 @@
 
 [INFO] 11/23/2026, 9:40:59 AM - hi
+[WARNING] 11/23/2026, 9:53:46 AM - 2
+[WARNING] 11/23/2026, 9:54:16 AM - warning above
+[ERROR] 11/23/2026, 9:54:39 AM - hi
+[INFO] 11/23/2026, 5:06:54 PM - Testing POST request

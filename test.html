@@ -1,0 +1,36 @@
+
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <title>Log System Test</title>
+</head>
+<body>
+    <h2>Добавяне на лог</h2>
+
+    <input id="type" value="INFO" placeholder="Type">
+    <input id="message" value="Testing POST request" placeholder="Message">
+    <button onclick="addLog()">Send POST</button>
+
+    <pre id="result"></pre>
+
+    <script>
+        async function addLog() {
+            const response = await fetch("/logs", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    type: document.getElementById("type").value,
+                    message: document.getElementById("message").value
+                })
+            });
+
+            const data = await response.json();
+            document.getElementById("result").textContent =
+                JSON.stringify(data, null, 2);
+        }
+    </script>
+</body>
+</html>

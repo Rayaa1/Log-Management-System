@@ -1,8 +1,10 @@
+
 const LogFactory = require("../factory/LogFactory");
 const LogManager = require("../singleton/LogManager");
 
 class LogFacade {
 
+    // Добавяне на нов лог
     addLog(type, message) {
 
         const log =
@@ -14,6 +16,7 @@ class LogFacade {
         LogManager.writeLog(log);
     }
 
+    // Показване на всички логове в конзолата
     showAllLogs() {
 
         const logs =
@@ -24,6 +27,7 @@ class LogFacade {
         );
     }
 
+    // Показване на логове по тип в конзолата
     showLogsByType(type) {
 
         const logs =
@@ -32,6 +36,16 @@ class LogFacade {
         logs.forEach(log =>
             console.log(log)
         );
+    }
+
+    // Връщане на всички логове
+    getAllLogs() {
+        return LogManager.readLogs();
+    }
+
+    // Връщане на логове по тип
+    getLogsByType(type) {
+        return LogManager.filterByType(type);
     }
 }
 
