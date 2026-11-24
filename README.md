@@ -1,145 +1,149 @@
 # Log-Management-System
 
+A JavaScript (Node.js) application for managing log files. It demonstrates the **Factory**, **Singleton** and **Facade** design patterns, and can be used through a console menu or through a small HTTP API.
 
-A JavaScript (Node.js) application for managing log files, demonstrating the use of **Factory Pattern**, **Singleton Pattern**, and **Facade Pattern**.
+## Table of Contents
+
+- [Project Overview](#project-overview)
+- [Software Design Patterns](#software-design-patterns)
+- [Project Structure](#project-structure)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Console Menu](#console-menu)
+  - [HTTP API](#http-api)
+- [Log File Format](#log-file-format)
+- [Concurrent Write Protection](#concurrent-write-protection)
+- [UML Class Diagram](#uml-class-diagram)
+- [Extending the System](#extending-the-system)
+- [Technologies Used](#technologies-used)
+- [Author](#author)
 
 ## Project Overview
 
 The system supports multiple log types:
 
-- INFO
-- WARNING
-- ERROR
+- `INFO`
+- `WARNING`
+- `ERROR`
 
-Features include:
+Features:
 
-- Creating log entries
-- Saving logs to a file
-- Reading logs from a file
+- Creating log entries of different types
+- Saving logs to a single, centralized file
+- Reading logs from the file
 - Filtering logs by type
-- Centralized file management
+- Write protection: only one write to the log file at a time (file locking)
 - Console menu for user interaction
-
----
+- HTTP API (`GET` and `POST`) with a simple test page
 
 ## Software Design Patterns
 
 ### Factory Pattern
 
-Implemented through the `LogFactory` class.
+Implemented by the `LogFactory` class (`patterns/factory/LogFactory.js`).
 
-Responsible for creating different log objects:
+The client only provides the log type and the message. The factory decides which class to instantiate:
 
-- InfoLog
-- WarningLog
-- ErrorLog
-
-Example:
+- `InfoLog`
+- `WarningLog`
+- `ErrorLog`
 
 ```javascript
-const log = LogFactory.createLog(
-    "info",
-    "User logged in"
-);
+const log = LogFactory.createLog("info", "User logged in");
 ```
+
+Adding a new log type requires one new class and one new `case` in the factory.
 
 ### Singleton Pattern
 
-Implemented through the `LogManager` class.
+Implemented by the `LogManager` class (`patterns/singleton/LogManager.js`).
 
-Ensures that only one instance manages access to the log file.
+It guarantees that only one instance manages access to the log file. The constructor returns the existing instance if one was already created, and the module exports that single instance, so every `require` returns the same object.
 
 Benefits:
 
 - Centralized file management
 - Prevents multiple managers from being created
+- A single place that controls writing to the file
 - Easier maintenance
 
 ### Facade Pattern
 
-Implemented through the `LogFacade` class.
+Implemented by the `LogFacade` class (`patterns/facade/LogFacade.js`).
 
-Provides a simplified interface to the entire logging system.
-
-Example:
+It provides a simplified interface to the entire logging system. Client code (the console menu and the HTTP server) works only with `LogFacade` and does not interact directly with `LogFactory` or `LogManager`.
 
 ```javascript
-logSystem.addLog(...)
-logSystem.showAllLogs()
-logSystem.showLogsByType(...)
+const logSystem = require("./patterns/facade/LogFacade");
+
+logSystem.addLog("error", "Database connection failed");
+logSystem.showAllLogs();
+logSystem.showLogsByType("ERROR");
+
+const all = logSystem.getAllLogs();          // returns an array
+const errors = logSystem.getLogsByType("ERROR"); // returns an array
 ```
-
-The client code does not directly interact with `LogFactory` or `LogManager`.
-
----
 
 ## Project Structure
 
-```text
-LogManagementSystem/
+```
+Log-Management-System/
 │
-├── app.js
+├── app.js                      # console menu
+├── server.js                   # HTTP server (GET and POST requests)
+├── test.html                   # test page for the POST request
 │
 ├── storage/
-│   └── logs.txt
+│   └── logs.txt                # centralized log file (created automatically)
 │
 ├── models/
-│   ├── Log.js
+│   ├── Log.js                  # base class
 │   ├── InfoLog.js
 │   ├── WarningLog.js
 │   └── ErrorLog.js
 │
 └── patterns/
-    │
     ├── factory/
-    │   └── LogFactory.js
-    │
+    │   └── LogFactory.js       # Factory Pattern
     ├── singleton/
-    │   └── LogManager.js
-    │
+    │   └── LogManager.js       # Singleton Pattern
     └── facade/
-        └── LogFacade.js
+        └── LogFacade.js        # Facade Pattern
 ```
 
----
+## Installation
 
-## Features
+Requirements:
 
-### Add Log Entries
+- [Node.js](https://nodejs.org/) (no external packages are needed)
 
-The system allows creating:
+Verify the installation:
 
-- INFO logs
-- WARNING logs
-- ERROR logs
-
-### Save Logs to File
-
-All log entries are stored in:
-
-```text
-storage/logs.txt
+```bash
+node -v
 ```
 
-### Read Logs from File
+Clone the repository:
 
-The application loads and displays previously stored log entries.
+```bash
+git clone https://github.com/<your-username>/Log-Management-System.git
+cd Log-Management-System
+```
 
-### Filter Logs by Type
+The `storage` folder and `logs.txt` are created automatically on first use.
 
-The user can display:
+## Usage
 
-- INFO logs only
-- WARNING logs only
-- ERROR logs only
+### Console Menu
 
----
+Run the application from the project folder:
 
-## Console Menu
+```bash
+node app.js
+```
 
-```text
+```
 ===== LOG MANAGEMENT =====
-
 1. Add INFO log
 2. Add WARNING log
 3. Add ERROR log
@@ -150,88 +154,201 @@ The user can display:
 0. Exit
 ```
 
----
+At `Choice:` enter only the number of the option. For options 1-3 the program then asks for a `Message:`.
 
-## Example Output
+Example session:
 
-```text
-========== ALL LOGS ==========
+```
+Choice: 3
+Message: Database connection failed
+ERROR log added.
 
-[INFO] User logged in
-[WARNING] Low memory warning
-[ERROR] Database connection failed
+Choice: 7
+[ERROR] 11/17/2026, 10:15:52 AM - Database connection failed
 ```
 
-Filtering by ERROR:
+### HTTP API
 
-```text
-========== ERROR LOGS ==========
+Start the server:
 
-[ERROR] Database connection failed
+```bash
+node server.js
 ```
 
----
+The server listens on `http://localhost:3000`.
+
+| Method | Route                | Description                                                              |
+|--------|----------------------|--------------------------------------------------------------------------|
+| GET    | `/test`              | Opens the test page (`test.html`)                                        |
+| GET    | `/logs`              | Returns all logs as JSON                                                 |
+| GET    | `/logs?type=ERROR`   | Returns only logs of the given type (`INFO`, `WARNING` or `ERROR`)       |
+| POST   | `/logs`              | Adds a new log. Body: `{ "type": "INFO", "message": "..." }`             |
+
+Add a log (Linux/macOS shell):
+
+```bash
+curl -X POST http://localhost:3000/logs \
+  -H "Content-Type: application/json" \
+  -d '{"type":"INFO","message":"Testing POST request"}'
+```
+
+Response:
+
+```json
+{ "success": true, "message": "Log added successfully" }
+```
+
+Get logs:
+
+```bash
+curl http://localhost:3000/logs
+curl "http://localhost:3000/logs?type=ERROR"
+```
+
+```json
+{
+  "success": true,
+  "count": 1,
+  "logs": ["[ERROR] 11/17/2026, 10:15:52 AM - Database connection failed"]
+}
+```
+
+You can also open `http://localhost:3000/test` in a browser and send a POST request from the test page.
+
+Validation and errors:
+
+| Status | When                                                                         |
+|--------|------------------------------------------------------------------------------|
+| 201    | Log added successfully                                                       |
+| 400    | Invalid JSON, missing or empty `message`, or invalid log type                |
+| 404    | Unknown route, or `test.html` not found                                      |
+
+The request body is limited to 10,000 characters.
+
+## Log File Format
+
+All logs are stored in `storage/logs.txt`, one entry per line:
+
+```
+[TYPE] date, time - message
+```
+
+```
+[INFO] 11/17/2026, 10:15:30 AM - User logged in
+[WARNING] 11/17/2026, 10:15:41 AM - Low memory warning
+[ERROR] 11/17/2026, 10:15:52 AM - Database connection failed
+```
+
+The date format depends on the system locale (`toLocaleString()`). Filtering by type matches the `[TYPE]` prefix at the start of each line.
+
+## Concurrent Write Protection
+
+Writing to the log file is protected so that two writes never happen at the same time:
+
+1. Before each write, `LogManager` creates a lock file (`storage/logs.lock`) using the `wx` flag, which succeeds for only one process at a time.
+2. Other writers wait briefly and retry (up to 100 attempts).
+3. After the write, the lock is always removed (`try/finally`).
+4. A stale lock (older than 5 seconds, for example after a crash) is removed automatically.
+
+Because the write uses `fs.appendFileSync` and `LogManager` is a Singleton, writes inside one process are also sequential. The lock file additionally protects against two copies of the program writing to the same file.
 
 ## UML Class Diagram
 
-The project includes the following classes:
+```mermaid
+classDiagram
+    class Log {
+        -String message
+        -Date date
+        +getType() String
+        +toString() String
+    }
+    class InfoLog {
+        +getType() String
+    }
+    class WarningLog {
+        +getType() String
+    }
+    class ErrorLog {
+        +getType() String
+    }
+    class LogFactory {
+        <<Factory>>
+        +createLog(type, message) Log
+    }
+    class LogManager {
+        <<Singleton>>
+        -String filePath
+        +writeLog(log)
+        +readLogs() String[]
+        +filterByType(type) String[]
+    }
+    class LogFacade {
+        <<Facade>>
+        +addLog(type, message)
+        +showAllLogs()
+        +showLogsByType(type)
+        +getAllLogs() String[]
+        +getLogsByType(type) String[]
+    }
 
-- Log
-- InfoLog
-- WarningLog
-- ErrorLog
-- LogFactory
-- LogManager
-- LogFacade
+    Log <|-- InfoLog
+    Log <|-- WarningLog
+    Log <|-- ErrorLog
+    LogFactory ..> Log : creates
+    LogFacade ..> LogFactory : uses
+    LogFacade ..> LogManager : uses
+```
 
 Relationships:
 
-- InfoLog inherits from Log
-- WarningLog inherits from Log
-- ErrorLog inherits from Log
-- LogFactory creates Log objects
-- LogFacade uses LogFactory
-- LogFacade uses LogManager
+- `InfoLog`, `WarningLog` and `ErrorLog` inherit from `Log`
+- `LogFactory` creates `Log` objects
+- `LogFacade` uses `LogFactory` and `LogManager`
+- `LogManager` has a single shared instance (Singleton)
 
----
+## Extending the System
 
-## Installation
+To add a new log type, for example `DEBUG`:
 
-### Requirements
+1. Create `models/DebugLog.js`:
 
-- Node.js
+   ```javascript
+   const Log = require("./Log");
 
-Verify installation:
+   class DebugLog extends Log {
+       getType() {
+           return "DEBUG";
+       }
+   }
 
-```bash
-node -v
-```
+   module.exports = DebugLog;
+   ```
 
-### Run the Application
+2. In `LogFactory.js` add `const DebugLog = require("../../models/DebugLog");` and a new case:
 
-```bash
-node start app.js
-```
+   ```javascript
+   case "debug":
+       return new DebugLog(message);
+   ```
 
----
+3. Optionally add menu options in `app.js` and add `DEBUG` to the list of allowed types in `server.js`.
+
+`LogManager` and `LogFacade` do not need to change.
 
 ## Technologies Used
 
 - JavaScript
 - Node.js
-- File System (`fs` module)
+- File System (`fs`) and `path` modules
+- `http` module (HTTP server)
 - Object-Oriented Programming (OOP)
-
----
 
 ## Author
 
-Course Project – Software Design Patterns
+Course Project - Software Design Patterns
 
-Implemented Patterns:
+Implemented patterns:
 
 - Factory Pattern
 - Singleton Pattern
 - Facade Pattern
-
-
